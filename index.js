@@ -3,38 +3,51 @@ const expressFileUpload = require('express-fileupload')
 const path = require('path')
 const bodyParser = require('body-parser')
 const app = express()
+const fs = require('fs')
 
-app.listen(3000, () => {
-    console.log('Server On http://localhost/3000')
-})
+// Server ON
+app.listen(3000)
+console.log('server ON http://localhost:3000')
 
-// Body Parser config
 app.use(bodyParser.urlencoded({ extended: true }))
 app.use(bodyParser.json())
 
+// Static public
+app.use('/', express.static('public'))
+
+// Restricciones de archivo
 app.use(expressFileUpload({
     limits: { fileSize: 5000000 },
     abortOnLimit: true,
-    responseOnLimit: "El peso del archivo que intentas subir supera el limite permitido",
-})
-)
-// Ruta a HTML Formulario
+    responseOnLimit: 'El peso del archivo que intentas subir supera el limite permitido ',
+}))
+
+//Rutas HTML
 app.get('/', (req, res) => {
     res.sendFile(__dirname + '/formulario.html')
 })
 
-// Ruta a HTML collage
-app.get('/', (req, res) => {
+app.get('/collage', (req, res) => {
     res.sendFile(__dirname + '/collage.html')
 })
 
-app.post("/imagen", (req, res) => {
+// Ruta post escribe imagen y entrega posición
+app.post('/imagen', (req, res) => {
     console.log(req.body)
     const { target_file } = req.files
     const { posicion } = req.body
-    target_file.mv(`${__dirname}/public/img/imagen-${posicion}.jpg`,
-        (err) => {
-            res.send("Archivo cargado con éxito")
-        })
+    target_file.mv(`${__dirname}/public/imgs/imagen-${posicion}.jpg`, (err) => {
+        //res.send('Archivo cargado con exito')
+        res.redirect('/collage')
+
+    })
 })
 
+// Ruta get elimina imagen
+app.get('/deleteImg/:nombre', (req, res) => {
+    const { nombre } = req.params
+    fs.unlink(`${__dirname}/public/imgs/${nombre}`, (err) => {
+        //res.send(`Archivo ${nombre} eliminado con éxito`) - Mensaje para mostrar archivo eliminado
+        res.redirect('/collage')
+    })
+})
